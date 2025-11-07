@@ -51,6 +51,17 @@ Thumbs.db
 # Streamlit
 .streamlit/secrets.toml
 
+# Files dengan sensitive data (KEAMANAN!)
+streamlit/db.py
+add_user.py
+
+# Temporary files
+*.tmp
+*.temp
+
+# Streamlit
+.streamlit/secrets.toml
+
 # Temporary files
 *.tmp
 *.temp
