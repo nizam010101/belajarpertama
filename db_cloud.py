@@ -129,22 +129,33 @@ def create_users_table():
 
 def authenticate(username, password):
     """Authenticate user (compatible with both MySQL and SQLite)"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    db_config = get_database_config()
-    
-    if db_config['type'] == 'mysql':
-        query = "SELECT * FROM users WHERE username=%s AND password=%s"
-        cursor.execute(query, (username, password))
-    else:
-        query = "SELECT * FROM users WHERE username=? AND password=?"
-        cursor.execute(query, (username, password))
-    
-    result = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return result is not None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        db_config = get_database_config()
+        
+        if db_config['type'] == 'mysql':
+            query = "SELECT * FROM users WHERE username=%s AND password=%s"
+            cursor.execute(query, (username, password))
+        else:
+            query = "SELECT * FROM users WHERE username=? AND password=?"
+            cursor.execute(query, (username, password))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return result is not None
+        
+    except Exception as e:
+        print(f"Authentication error: {e}")
+        # Try to create table and default user
+        try:
+            create_users_table()
+            add_user("admin", "password123")
+        except:
+            pass
+        return False
 
 def add_user(username, password):
     """Add new user (compatible with both MySQL and SQLite)"""

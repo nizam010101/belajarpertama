@@ -3,6 +3,47 @@ import streamlit as st
 # Import fungsi autentikasi dari db_cloud.py (cloud-ready database)
 from db_cloud import authenticate, create_users_table, add_user
 
+@st.cache_data
+def initialize_database():
+    """Initialize database and create default user if needed"""
+    try:
+        # Create users table
+        create_users_table()
+        
+        # Check if admin user exists
+        from db_cloud import get_db_connection, get_database_config
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        db_config = get_database_config()
+        
+        if db_config['type'] == 'mysql':
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = %s", ("admin",))
+        else:
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = ?", ("admin",))
+        
+        user_count = cursor.fetchone()[0]
+        
+        if user_count == 0:
+            # Add default admin user
+            if add_user("admin", "password123"):
+                print("✅ Default admin user created")
+        
+        cursor.close()
+        conn.close()
+        
+        return "Database initialized successfully"
+        
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+        # Create admin user anyway
+        try:
+            add_user("admin", "password123")
+            return "Database initialized with fallback"
+        except Exception as e2:
+            print(f"Fallback initialization failed: {e2}")
+            return "Database initialization failed"
+
 def dashboard_page():
     """Halaman dashboard setelah login"""
     st.title("🏠 Dashboard")
@@ -100,7 +141,46 @@ def login_page():
             else:
                 st.warning("⚠️ Please fill in both username and password.")
 
+def initialize_database():
+    """Initialize database and create default user if needed"""
+    try:
+        # Create users table
+        create_users_table()
+        
+        # Check if admin user exists
+        from db_cloud import get_db_connection, get_database_config
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        db_config = get_database_config()
+        
+        if db_config['type'] == 'mysql':
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = %s", ("admin",))
+        else:
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = ?", ("admin",))
+        
+        user_count = cursor.fetchone()[0]
+        
+        if user_count == 0:
+            # Add default admin user
+            if add_user("admin", "password123"):
+                print("✅ Default admin user created")
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+        # Create admin user anyway
+        try:
+            add_user("admin", "password123")
+        except:
+            pass
+
 def main():
+    # Initialize database on first run
+    initialize_database()
+    
     # Initialize session state
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
